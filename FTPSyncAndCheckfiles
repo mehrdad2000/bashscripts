@@ -1,0 +1,35 @@
+#!/bin/bash
+#This script sync a FTP path and check "expected" file, if files name not exist produce a file that call "issues". "issues" file show which files are missed.
+#name format of file must be like "data_customer_20211120.zip", it will trim extension and date from end of file.
+
+DATE=`date +%Y%m%d -d "1 days ago"`
+
+USER='$USER'
+PASS='$PASS'
+
+HOST='192.168.1.1'
+LOCAL_BACKUP_DIR='/data/db/'${DATE}'/data'
+REMOTE_DIR='/FTPPATH/'${DATE}''
+
+tmp=($(lftp -e "cd $REMOTE_DIR && glob -d echo [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]; quit" -u $USER,$PASS $HOST))
+REMOTE_DIR="$REMOTE_DIR/${tmp[@]: -1}"
+
+mkdir -p '/data/db/'${DATE}'/data'
+
+lftp -u $USER,$PASS $HOST <<EOF
+set ftp:ssl-protect-data true
+set ftp:ssl-force true
+set ssl:verify-certificate no
+cd $REMOTE_DIR
+lcd $LOCAL_BACKUP_DIR
+
+mirror
+
+quit
+EOF
+
+#serverlist of today
+find  '/data/db/'${DATE}'' -type f | sed 's|.*/||' | sort  > '/data/db/'${DATE}'/temp'  && sed -e s/temp//g -i  '/data/db/'${DATE}'/temp'  && sed 's .............$  ' '/data/db/'${DATE}'/temp'  | awk 'NF'> "/data/db/"$DATE"/serverlist"
+
+#find files not exist
+diff '/data/db/'${DATE}'/serverlist' '/data/db/expect' | grep '^>' | sed 's/^>\ //'  > "/data/db/"$DATE"/issues"
