@@ -1,0 +1,3 @@
+#users is a file that contain list of users on each line.
+
+shuf users | awk 'NR%5{printf "%s ",$0;next;}1' | cat -b && echo
