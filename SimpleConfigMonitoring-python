@@ -1,0 +1,110 @@
+#!/bin/bash
+
+rm /tmp/version 2> /dev/null
+size=`du -hs /home/MyApp/* | sort -rh | head -1 | awk '{print $1}';`
+homesize=`df -h  | grep home | awk '{print $5 }';`
+mem=`free | grep Mem | awk '{print $3/$2 * 100.0}' | awk '{printf "%.0f",$1}'`
+>/opt/app-ui/ui/index1.htm
+now=$(date  +"%Y-%m-%d &nbsp;  %H-%M")
+echo "<html><body><h1><center>App Monitoring v1.0  &nbsp; </center></h1> <table cellpadding=3 cellspacing=0 border=1 bgcolor=#FFB0B0> <th>No</th><th>CFG Name</th> <th>Uptime</> <th>IP-R1</th> <th>IP-R2</th> <th>Port R1</th><th>state</th> <th>Port R2</th><th>state</th> <th>Type R1</th> <th>Type R2</th> <th>Acqinst</th> <th>Mode</th> <th>Pid</th> <th>ErrorMessage</th>  <th>log tail</th> <th>Dlog</th>  <th>logpath</th> <th>01 valid</th> <th>02 valid</th> <th>Version</th> <th>PC</th> <th>MT</th> <th>PCC</th> <th>ISO</th>" >> /opt/app-ui/ui/index1.htm
+cnt=0
+counter=1
+ps -e -o command  | egrep ".*\A.*cfg" > /tmp/driver-process.log
+while read recline
+do
+	if [ `echo "$recline" | grep "grep" | wc -l` -gt 0 ]; then
+		continue
+	fi
+	drvexe=`echo "$recline" | awk '{print $1};'`
+	drvvers=`$drvexe -version | tr -d '[a-z][A-Z] '`
+       
+ 	echo $drvvers >> /tmp/version
+	drvconf=`echo "$recline" | awk '{print $3};'`	
+	drvconffile=`echo "$recline" | awk '{print $3};' | awk -F'/' '{print $NF};'`
+	pid=`pgrep -f $drvconffile`	
+	uptime=`ps -p $pid -o etime |  tr -d '[a-z][A-Z]' |sed '/^\s*$/d'`
+	confr1ip=`grep "^R1_IP" "$drvconf" | head -1 | awk '{print $2};'`
+	confr1port=`grep "^LISTEN_PORT_R1" "$drvconf" | head -1 | awk '{print $2};'`
+	stateport1=`netstat -ant | grep :$confr1port | awk '{print $6}' | sort | sort -n |awk '!NF || !seen[$0]++'`
+	confr1type=`grep "^CONNECTION_TYPE_R1" "$drvconf" | head -1 | awk '{print $2};'`
+	confr2ip=`grep "^S2_IP" "$drvconf" | head -1 | awk '{print $2};'`
+        confr2port=`grep "^CONNECT_PORT_R2" "$drvconf" | head -1 | awk '{print $2};'`
+	stateport2=`netstat -ant | grep :$confr2port | awk '{print $6}' | sort | sort -n |awk '!NF || !seen[$0]++' `
+        confr2type=`grep "^CONNECTION_TYPE_R2" "$drvconf" | head -1 | awk '{print $2};'`
+	conmode=`grep "^CONNECTION_MODE" "$drvconf" | head -1 | awk '{print $2};'`
+	customer=`grep "^CUSTOMER" "$driverconf" | head -1 | awk '{print $2};'`
+        logspath=`grep "^LOGPATH" "$driverconf" | head -1 | awk '{print $2};'`
+	logfile=`ls -d -rt $logspath/* | tail -2 | grep -v debug`
+	debuglog=`ls $logspath/debug.* | tail -1`
+	log=`tail -n5 $logfile | awk '!/ReConnect|TCPSPortNoDC/'`
+	cfr1=`grep "^CFR1" "$driverconf" | awk '{print $2};'`
+	cfr2=`grep "^CFR2" "$driverconf" | awk '{print $2};'`
+#	preiso=`grep "^CODE3" "$driverconf" | head -1 | awk '{print $2};'`
+#	pcc=`grep "^CODE1C" "$driverconf" | head -1 | awk '{print $2};'`
+#	mt=`grep "^CODE2" "$driverconf" | head -1 | awk '{print $2 $3 $4 $5 $6 $7 $8 $7 $9 $10 $11 $12 $13 $14 $15 $16 $17 $18 $19 $20};'`
+#	pc=`grep "^CODE1" "$driverconf" | head -1 | awk '{print $2 $3 $4 $5 $6 $7 $8 $7 $9 $10 $11 $12 $13 $14 $15 $16 $17 $18 $19 $20};'`
+	reason=`grep ErrorMessage $debuglog | head -1 | awk '{print $3};'`
+	dlog=`grep M $debuglog | tail -2`
+
+	if [ -f "$cfr1/01" ]; then
+		startr1pub=`openssl x509 -in "$cfr1/01" -text   | egrep "Not After" | sed -r 's/:/\t/g' | awk '{print $3" "$4" "$8}' | sed 'N;s/\n/ /'`
+	else
+		startr1pub=""
+	fi
+
+	if [ -f "$cfr2/02" ]; then
+                startr2pub=`openssl x509 -in "$cfr2/02" -text   | egrep "Not After" | sed -r 's/:/\t/g' | awk '{print $3" "$4" "$8}' | sed 'N;s/\n/ /'`
+        else
+                startr2pub=""
+        fi
+         
+
+
+
+	if [ `echo "$counter%2" | bc` -eq 0 ]; then
+		coloring="#fff"	
+	else
+		coloring="#89ff8a"
+	fi
+	echo "<tr style='background-color:$coloring'> <td>$((cnt+=1))</td>
+	<td>$driverconffile</td>
+	<td>$uptime</td>
+	<td>$confr1ip</td>
+	<td>$confr2ip</td>
+	<td>$confr1port</td>
+	<td><font size="1">$stateport1</font></td> 
+	<td>$confr2port</td>
+	<td><font size="1">$stateport2</font></td>
+	<td><font size="1">$confr1type</font></td>
+	<td><font size="1">$confr2type</font></td>
+	<td><font size="1">$customer</font></td>
+	<td><font size="1">$conmode</font></td> 
+	<td><font size="1">$pid</font></td>
+	<td><font size="1">$reason</font></td>
+	<td><font size="1">$log</font></td>
+	<td><font size="1">$dlog</font></td>
+	<td><font size="1">$logspath</font></td>
+        <td><font size="1">$startr1pub</font></td>
+        <td><font size="1">$startr2pub</font></td>
+	<td>$drvvers</td>
+	<td><font size="1">$code1</font></td>
+	<td><font size="1">$code2</font></td>
+	<td><font size="1">$code1c</font></td>
+	<td><font size="1">$code3</font></td>
+	</tr>
+	 " >> /opt/app-ui/ui/index1.htm
+	counter=`echo "$counter+1" | bc`
+#TShoot
+#echo "$driverconffile $uptime $confr1ip $confr2ip $confr1port $stateport1 $confr2port $stateport2 $confr1type $confr2type $customer $conmode $log $logspath $startr1pub $startr2pub $drvvers"
+		
+done < /tmp/driver-process.log
+otherver=`echo "$(</tmp/version)" | tr '[:space:]' '[\n*]' | grep -v "^\s*$" | sort | uniq -c | sort -bnr |  paste -sd, -` 
+echo "<h3><center>Status &nbsp;  Total: $cnt, &nbsp;Group by version: $otherver, &nbsp; Log Size:$size &nbsp; Disk Usage:$homesize &nbsp; Mem Usage: $mem% </center> </h3> " >> /opt/app-ui/ui/index1.htm
+echo "<html><body><h3><center> Time: "$now" &nbsp; (data refresh every 1 minute) </center></h3></body></html>" >> /opt/app-ui/ui/index1.htm
+echo "<html><body><h3><center> IP App Internal "192.168.0.1"  External "192.168.2.1" Gateway "192.168.1.1" </center></h3></body></html>" >> /opt/app-ui/ui/index1.htm
+
+echo "</table></body></html>" >> /opt/app-ui/ui/index1.htm
+mv /opt/app-ui/ui/index1.htm /opt/app-ui/ui/index.htm
+pkill python
+cd /opt/app-ui/ui
+python -m SimpleHTTPServer 8000 &
