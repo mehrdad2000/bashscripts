@@ -1,0 +1,1 @@
+grep -e "\*ERROR\*" -e "Caused by:" $FILE  | sort -n | uniq -c
