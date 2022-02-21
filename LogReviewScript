@@ -2,4 +2,4 @@
 grep -e "\*ERROR\*" -e "Caused by:" $LOGFILE  | sort | uniq -c | sort -nr
 
 #group by Error Type
-grep -ioh "TRACE\|INFO\|ERROR\|WARN\|DEBUG" $LOGFILE  | sort | uniq -c | sort -n
+grep -ioh "TRACE\|INFO\|ERROR\|WARN\|DEBUG" $LOGFILE  | sort | uniq -c | sort -nr
