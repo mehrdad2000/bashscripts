@@ -6,3 +6,6 @@ grep -ioh "TRACE\|INFO\|ERROR\|WARN\|DEBUG" $LOGFILE  | sort | uniq -c | sort -n
 
 #grep anomalies
 grep -i -w 'fatal\|error\|exception\|timeout\|waiting\|fail\|unable\|lock\|block'
+
+#count error span time
+grep -i err LOGFILE | awk 'function prt() { if (n) printf "%s\t%s\n",pkey,n } { key=substr($0,0,2); if (key != pkey) { prt(); n=0; pkey=key } n++ } END { prt() }'
