@@ -18,3 +18,12 @@ $ sed -n "/^$(date --date='10 minutes ago' '+%H:%M')/,\$p" /home/jboss/log/serve
 
 #How to find which logs files contain a String in the last n days (ex. 5 days)
 $ find . -name "server.log*" -mtime -5 | xargs grep -i "OutOfMemoryError"
+
+#How to count the number of Threads running
+$ ps -eLf | grep [PID] | wc -l
+
+#How to monitor a Java Process Heap size
+jmap -heap PID
+
+#How to compare two files side by side
+sdiff -s standalone1.xml standalone2.xml
