@@ -9,3 +9,12 @@ grep -i -w 'fatal\|error\|exception\|timeout\|waiting\|fail\|unable\|lock\|block
 
 #count error span time
 grep -i err LOGFILE | awk 'function prt() { if (n) printf "%s\t%s\n",pkey,n } { key=substr($0,0,2); if (key != pkey) { prt(); n=0; pkey=key } n++ } END { prt() }'
+
+#How to grep the Server logs for the last hour (ex. find the ERROR String)
+$ grep "^$(date -d '-1 hour' +'%H')" /home/jboss/server.log  | grep 'ERROR'
+
+#How to grep the Server logs for the last minutes (ex. find the ERROR String)
+$ sed -n "/^$(date --date='10 minutes ago' '+%H:%M')/,\$p" /home/jboss/log/server.log | grep "ERROR"
+
+#How to find which logs files contain a String in the last n days (ex. 5 days)
+$ find . -name "server.log*" -mtime -5 | xargs grep -i "OutOfMemoryError"
