@@ -1,0 +1,2 @@
+#curl
+echo -e "\n""$(tree -ft $PATH)" > /tmp/notify.txt && curl --ssl-reqd smtp://$MAILSERVER.$PORT --mail-from $FROM --mail-rcpt $TO --user '$USER:$PASS' --upload-file /tmp/notify.txt
