@@ -1,0 +1,97 @@
+#!/bin/bash
+export EAPV=7.2
+
+BANK=$2
+
+printf "%s\n"
+printf "%s\n" "-------------------------------------------------------------------"
+
+cmdlist="Commandlist::l|p|d|rst|st|stall|stp|stpall|dx|hx|cli|log|ylog"
+
+if [ -z "$1" ]
+then
+    printf '%s\n' $cmdlist
+    printf "Enter the name of command: "
+    read cmd
+else
+    cmd="$1"
+fi
+case $cmd in
+    rst)
+      kill -9 `ps -ef | grep jboss | grep -v grep |grep $BANK | awk '{print $2}'`
+      sleep 2s
+      nohup /use/app/jboss-eap-$EAPV-$BANK/bin/domain.sh &
+      tailf  /use/data/log/$BANK/server.log
+    ;;
+    stp)
+      kill -9 `ps -ef | grep jboss | grep -v grep | grep $BANK | awk '{print $2}'`
+    ;;
+
+    stpall)
+      kill -9 `ps -ef | grep jboss | grep -v grep | grep jboss-eap | awk '{print $2}'`
+    ;;
+
+    st)
+      nohup /use/app/jboss-eap-$EAPV-$BANK/bin/domain.sh &
+    ;;
+
+    stall)
+     `nohup /use/app/jboss-eap-7.2-$CUSTOMER1/bin/domain.sh` & '&&' `nohup /use/app/jboss-eap-7.2-$CUSTOMER2/bin/domain.sh` &
+    ;;
+
+    l)
+      ps -ef | grep jboss | grep domain.sh
+    ;;
+
+    d)
+      /use/app/jboss-eap-7.2-$CUSTOMER1/bin/jboss-cli.sh --controller=$SERVERIP:9990 -c command='/deployment=*:read-attribute(name=name)' |grep 'address\|outcome' |awk '{ print $3 $5 }' | sed 's/[^a-zA-Z0-9.-]//g' |sed 's/deployment//' |sed 's/success//' | column -x
+    ;;
+
+    p)
+      grep "port="  /use/app/jboss-eap-7.2-*/domain/configuration/domain.xml  | sed -e 's#.*=\(\)#\1#' | grep -Eo '[0-9]{1,6}'  | netstat -tpuln 2>/dev/null  | grep 'tcp ' |grep -v 22 | grep -v 25 | grep -v 41824 | grep -v 111  | awk '{print $4 "   " $6}' | cut -d':' -f2 | sort -n | column -x
+    ;;
+
+    log)
+      tailf /use/data/log/$BANK/server.log
+    ;;
+
+    ylog)
+     less +F /use/data/log/use-main-server/server.log.$(date --date="yesterday" +"%Y-%m-%d")
+    ;;
+
+    dx)
+       vim /use/app/jboss-eap-$EAPV-$BANK/domain/configuration/domain.xml
+    ;;
+    hx)
+       vim /use/app/jboss-eap-$EAPV-$BANK/domain/configuration/host.xml
+    ;;
+    cli)
+       /use/app/jboss-eap-$EAPV-$BANK/bin/jboss-cli.sh --connect controller="$( hostname -I | awk '{ print $1}' )":9999
+    ;;
+
+    help)
+    echo "Here is the jb help, by Mehrdad 2022."
+    echo
+    echo "Syntax: jb [-l|p|d|rst|st|stall|stp|stpall|dx|hx|cli|log|ylog]"
+    echo "options:"
+    echo -e '\t'"-l             show list of running jboss"
+    echo -e '\t'"-p             show all ports status of domain.xml"
+    echo -e '\t'"-d             show list of deployment"
+    echo -e '\t'"-rst \$BANK    reset jboss and show log"
+    echo -e '\t'"-stp \$BANK    stop jboss"
+    echo -e '\t'"-stall         start all jboss"
+    echo -e '\t'"-stpall                stop all jboss"
+    echo -e '\t'"-log \$BANK    show tail log of jboss"
+    echo -e '\t'"-jb ylog \$BANK        show tail log of jboss for yesterday"
+    echo -e '\t'"-jb dx \$BANK  vi domain.xml"
+    echo -e '\t'"-jb hx \$BANK  vi host.xml"
+    echo -e '\t'"-jb cli \$BANK jboss cli"
+    echo
+
+
+     ;;
+
+    *)
+      printf '%s\n' $cmdlist
+    ;;
+esac
