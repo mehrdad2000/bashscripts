@@ -52,7 +52,7 @@ case $cmd in
     ;;
 
     log)
-      tailf /use/data/log/$CUSTOMER/server.log
+     (echo /use/data/log/$CUSTOMER/server.log ;printf "%s\n" "-------------------------------------------------------------------" ; tailf /use/data/log/$CUSTOMER/server.log)
     ;;
 
     ylog)
