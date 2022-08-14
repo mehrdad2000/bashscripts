@@ -1,0 +1,3 @@
+#create simple log file that check webservice with curl (config file like this name,ip,port)
+while IFS="," read name ip port junk;   do   if curl -s  http://192.168.1.1.1:"$port"/start/ |grep -q  "login"  ; then echo "$(date +"%Y-%m-%d %T") "$name" UP"; else echo "$(date +"%Y-%m-%d %T") "$name" DOWN"; fi; done < /opt/config
+
