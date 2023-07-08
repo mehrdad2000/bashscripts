@@ -1,2 +1,2 @@
 # bashscript
-In this section, I tried to collect useful bash scripts.
+In this repo, I'll try to collecting useful bash scripts.
