@@ -1,0 +1,75 @@
+#!/bin/bash
+
+file="/tmp/mylogfile.log"
+
+statement_id=$(grep -oP 'Statement # \K\d+'  "$file")
+max_run_time=$(awk '/Run Time/{getline; print $5}' "$file")
+
+echo -e "Statementid | RunTime\n$(paste -d " | " <(echo "$statement_id") <(echo "$max_run_time"))" | sort -k2 -nr
+
+
+
+###result extract StatementID and RunTime and sort by RunTime
+24908212  0.0004
+
+
+
+###mylogfile
+
+Statement history:
+
+Trace Level                0x7F21
+Trace Mode                   User
+Number of traces            10000
+Current Stmt ID          24908212
+Trace Buffer size            4056
+Duration of buffer            118 Seconds
+Trace Flags            0x00007F21
+Control Block          0x52fd9ff028
+
+
+
+Statement # 24908212:     @ 0x52fda0f0e0
+
+ Database:        mydbname
+ Statement text:
+  select FIRST 1 myt0_.id as col_0_0_ from MyTable myt0_
+    where myt0_.targetPC=? and myt0_.receivingDes=? and
+    myt0_.status='PENDING' and storeforwa0_.dueDate<? order by
+    myt0_.priority asc
+
+  SELECT using table [ mytable ]
+
+ Iterator/Explain
+ ================
+    ID   Left  Right Sender   Next   Est Cost   Est Rows   Num Rows    Partnum Type
+     2      0      0      0      0         35        132          1   60817413 Index Scan
+     1      2      0      0      0         29        132          1          0 Sort
+
+ Host Variables
+ ==============
+ 0 unknown          <Data Not Available>
+ 1 unknown          <Data Not Available>
+ 2 unknown          <Data Not Available>
+
+ Statement information:
+  Sess_id  User_id  Stmt Type        Finish Time    Run Time   TX Stamp   PDQ
+  2815     1100     SELECT           11:55:24       0.0004     ffffffffc3cd4035 0
+
+ Statement Statistics:
+  Page       Buffer     Read       Buffer     Page       Buffer     Write
+  Read       Read       % Cache    IDX Read   Write      Write      % Cache
+  0          33         100.00     0          0          0          0.00
+
+  Lock       Lock       LK Wait    Log        Num        Disk       Memory
+  Requests   Waits      Time (S)   Space      Sorts      Sorts      Sorts
+  0          0          0.0000     0.000 B    0          0          0
+
+  Total      Total      Avg        Max        Avg        I/O Wait   Avg Rows
+  Executions Time (S)   Time (S)   Time (S)   IO Wait    Time (S)   Per Sec
+  1          0.0009     0.0009     0.0005     0.000000   0.000000   2433.4862
+
+  Estimated  Estimated  Actual     SQL        ISAM       Isolation  SQL
+  Cost       Rows       Rows       Error      Error      Level      Memory
+  65         132        0          0          0          CRU        89280
+
