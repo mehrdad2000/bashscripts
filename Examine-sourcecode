@@ -1,0 +1,3 @@
+#java
+#extract all libs that use in java project
+find . -type f -name "*.java" -exec grep -Eo "import [^;]*;" {} \; | sed -e 's/;^M//g' -e 's/^import //g' | sort | uniq
